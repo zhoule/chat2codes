@@ -7,3 +7,5 @@ streamlit_chat
 tiktoken
 qdrant-client
 langchain-community
+fastapi
+uvicorn

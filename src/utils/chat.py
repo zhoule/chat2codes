@@ -44,11 +44,11 @@ def run_chat_app(qdrant_collection_name):
                 # 提取 result 字段内容
                 if isinstance(st.session_state["generated"][i], dict):
                     result_content = st.session_state["generated"][i].get('result', '')
+                    # 显示 result 内容并支持代码高亮
+                    st.code(result_content, language='java')
                 else:
-                    result_content = st.session_state["generated"][i]
-                
-                # 显示 result 内容并支持代码高亮
-                st.code(result_content, language='java')
+                    # 正常输出非字典类型的消息
+                    message(st.session_state["generated"][i], key=str(i))
     except Exception as e:
         st.error(f"Error occurred while connecting to Qdrant: {e}")
 

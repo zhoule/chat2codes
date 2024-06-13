@@ -1,14 +1,16 @@
 # Chat2Code
 
-This repository contains Python scripts that demonstrate how to create a chatbot using Streamlit, OpenAI GPT-3.5-turbo, and Qdrant.
+This repository reference [Chat-with-Github-Repo](https://github.com/peterw/Chat-with-Github-Repo?tab=readme-ov-file) contains Python scripts that demonstrate how to use Lobe Chat, OpenAI and Qdrant to chat with your code base.
 
-The chatbot searches a dataset stored in Qdrant to find relevant information from any Git repository and generates responses based on the user's input.
+We use Lobe Chat as chat client it will searches a dataset stored in Qdrant to find relevant information from any Git repository and generates responses based on the user's input.
 
 ## Files
 
-- `src/utils/process.py`: This script clones a Git repository, processes the text documents, computes embeddings using OpenAIEmbeddings, and stores the embeddings in a DeepLake instance.
+- `src/utils/process.py`: This script clones a Git repository, processes the text documents, computes embeddings using OpenAIEmbeddings, and stores the embeddings in Qdrant instance.
 
-- `src/utils/chat.py`: This script creates a Streamlit web application that interacts with the user and the Qdrant instance to generate chatbot responses using OpenAI GPT-3.5-turbo.
+- `src/utils/chat.py`: This script creates a Streamlit web application that interacts with the user and the Qdrant instance to generate chatbot responses using OpenAI, not very user friendly, if you want better user experence you can go the section Use Lobe Chat as chat client.
+
+- `src/utils/chat.py` This script provides a class OpenAI-like streaming interface. Essentially, it is not truly streaming; it processes the response in a streaming manner to be compatible with various Chat Clients.
 
 - `src/main.py`: This script contains the command line interface (CLI) that allows you to run the chatbot application.
 
@@ -52,6 +54,7 @@ OPENAI_API_BASE=your_openai_api_base
 OPENAI_API_KEY=your_openai_api_key
 QDRANT_CLOUD_URL=your_qdrant_cloud_url
 QDRANT_API_KEY=your_qdrant_cloud_api_key
+QDRANT_COLLECTION_NAME=your_qdrant_collection_name
 ```
 
 4. Use the CLI to run the chatbot application. You can either process a Git repository or start the chat application using an existing dataset.
@@ -77,6 +80,31 @@ python src/main.py chat --qdrant_collection_name my-dataset
 ```
 
 The Streamlit chat app will run, and you can interact with the chatbot at `http://localhost:8501` (or the next available port) to ask questions about the repository.
+
+
+## Use Lobe Chat as ChatClient
+
+1. Follow the local installation guide of Lobe Chat to run it locally
+
+```
+$ git clone https://github.com/lobehub/lobe-chat.git
+$ cd lobe-chat
+$ pnpm install
+$ pnpm dev
+```
+
+2. Start the chat service
+```
+python src/utils/api.py
+```
+
+3. Open [Lobe Chat](http://localhost:3010/) and update the Language Model to use the chat service
+
+4. In Lobe Chat setting page update Language Model
+API Key: any keywords
+API Proxy Address: http://localhost:8000/v1
+![Lobe Chat](assets/lobechat-configuration.png)
+
 
 ## License
 
