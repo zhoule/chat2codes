@@ -9,10 +9,16 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_qdrant import Qdrant
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct, VectorParams
+from dotenv import load_dotenv
 
+load_dotenv()
 # Set the OpenAI API key
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 openai.api_base = os.environ.get("OPENAI_API_BASE")
+openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
+openrouter_api_base = os.environ.get("OPENROUTER_API_BASE")
+print(openai.api_key)
+print(openai.api_base)
 
 def clone_repository(repo_url, local_path):
     """Clone the specified git repository to the given local path."""
@@ -84,7 +90,9 @@ def process(repo_url, include_file_extensions, qdrant_collection_name, repo_dest
 
     qdrant_url = os.getenv("QDRANT_CLOUD_URL")
     qdrant_api_key = os.getenv("QDRANT_API_KEY")
-    qdrant_client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+    # qdrant_client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+    qdrant_url = "http://127.0.0.1:6333" 
+    qdrant_client = QdrantClient(url=qdrant_url, timeout=60)
     qdrant_client.recreate_collection(
         collection_name=qdrant_collection_name,
         vectors_config=VectorParams(size=1536, distance="Cosine")  # Manually specify the vector size and distance

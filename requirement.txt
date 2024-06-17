@@ -9,3 +9,4 @@ qdrant-client
 langchain-community
 fastapi
 uvicorn
+python-gitlab
