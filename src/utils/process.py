@@ -3,13 +3,13 @@ import os
 import pathspec
 import subprocess
 from langchain.document_loaders import TextLoader
-# from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_qdrant import Qdrant
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct, VectorParams
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 # Set the OpenAI API key
@@ -70,34 +70,58 @@ def load_docs(root_dir, file_extensions=None):
     return docs
 
 def split_docs(docs):
-    """Split the input documents into smaller chunks."""
+    """Split the input documents into smaller chunks and return as strings."""
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    return text_splitter.split_documents(docs)
+    split_docs = text_splitter.split_documents(docs)
+    return [doc.page_content for doc in split_docs]
 
 def process(repo_url, include_file_extensions, qdrant_collection_name, repo_destination):
     """
     Process a git repository by cloning it, filtering files, splitting documents,
     creating embeddings, and storing everything in a Qdrant collection.
     """
-    # qdrant_url = os.getenv("QDRANT_URL")
+    process_incremental(repo_url, include_file_extensions, qdrant_collection_name, repo_destination)
+def check_collection_exists(client, collection_name):
+    try:
+        collections = client.get_collections().collections
+        return any(col.name == collection_name for col in collections)
+    except Exception as e:
+        print(f"Error checking collection existence: {e}")
+        return False
 
+
+def get_embeddings_with_retry(texts, embeddings, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return embeddings.embed_documents(texts)
+        except Exception as e:
+            print(f"Error getting embeddings: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)  # Exponential backoff
+            else:
+                raise
+
+
+def process_incremental(repo_url, include_file_extensions, qdrant_collection_name, repo_destination):
     clone_repository(repo_url, repo_destination)
-
     docs = load_docs(repo_destination, include_file_extensions)
     texts = split_docs(docs)
-
     embeddings = OpenAIEmbeddings()
 
     qdrant_url = os.getenv("QDRANT_CLOUD_URL")
     qdrant_api_key = os.getenv("QDRANT_API_KEY")
-    # qdrant_client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
-    qdrant_url = "http://127.0.0.1:6333" 
-    qdrant_client = QdrantClient(url=qdrant_url, timeout=60)
-    qdrant_client.recreate_collection(
-        collection_name=qdrant_collection_name,
-        vectors_config=VectorParams(size=1536, distance="Cosine")  # Manually specify the vector size and distance
-    )
+    qdrant_client = QdrantClient(url="http://127.0.0.1:6333")
 
-    # client = QdrantClient(url=qdrant_url)
+    if not check_collection_exists(qdrant_client, qdrant_collection_name):
+        qdrant_client.recreate_collection(
+            collection_name=qdrant_collection_name,
+            vectors_config=VectorParams(size=1536, distance="Cosine")
+        )
+
     db = Qdrant(client=qdrant_client, collection_name=qdrant_collection_name, embeddings=embeddings)
-    db.add_documents(texts)
+
+    # 获取嵌入向量并进行重试
+    embeddings_vectors = get_embeddings_with_retry(texts, embeddings)
+
+    # 将嵌入向量添加到Qdrant数据库
+    db.add_documents(embeddings_vectors)
