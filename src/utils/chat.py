@@ -19,7 +19,7 @@ def run_chat_app(qdrant_collection_name):
     embeddings = OpenAIEmbeddings()
 
     try:
-        client = QdrantClient(url=os.environ.get("QDRANT_CLOUD_URL"), api_key=os.environ.get("QDRANT_API_KEY"))
+        client = QdrantClient(url=os.environ.get("QDRANT_URL"), api_key=os.environ.get("QDRANT_API_KEY"))
         db = Qdrant(client=client, collection_name=qdrant_collection_name, embeddings=embeddings)
 
         if "generated" not in st.session_state:

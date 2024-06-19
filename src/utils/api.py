@@ -101,7 +101,7 @@ async def chat(request: ChatRequest):
         qdrant_collection_name = os.getenv("QDRANT_COLLECTION_NAME", "your-collection-name")
 
         embeddings = OpenAIEmbeddings()
-        client = QdrantClient(url=os.environ.get("QDRANT_CLOUD_URL"), api_key=os.environ.get("QDRANT_API_KEY"))
+        client = QdrantClient(url=os.environ.get("QDRANT_URL"), api_key=os.environ.get("QDRANT_API_KEY"))
         db = Qdrant(client=client, collection_name=qdrant_collection_name, embeddings=embeddings)
 
         return StreamingResponse(generate_streaming_response(db, request.messages), media_type="text/event-stream")

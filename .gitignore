@@ -2,4 +2,5 @@ env
 .env
 repos
 .idea/
-
+f-repo/
+repo/
